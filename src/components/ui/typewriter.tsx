@@ -1,5 +1,6 @@
 "use client"
-import React, { useEffect, useState } from "react"
+import type { ReactNode } from "react"
+import { useEffect, useState } from "react"
 import { motion, Variants } from "framer-motion"
 import { cn } from "@/lib/utils"
 
@@ -13,7 +14,7 @@ interface TypewriterProps {
     className?: string
     showCursor?: boolean
     hideCursorOnType?: boolean
-    cursorChar?: string | React.ReactNode
+    cursorChar?: string | ReactNode
     cursorAnimationVariants?: {
         initial: Variants["initial"]
         animate: Variants["animate"]

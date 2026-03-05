@@ -1,4 +1,4 @@
-import { motion, AnimatePresence } from "motion/react";
+import { motion, AnimatePresence } from "framer-motion";
 import { ArrowRight, Bot, Code2, Sparkles, Zap, Shield, Rocket } from "lucide-react";
 import heroVideo from "./video.mp4";
 import { Logo } from "./Logo";
@@ -11,12 +11,14 @@ import { Marquee, type MarqueeProps } from '@/components/ui/marquee';
 import { Typewriter } from "@/components/ui/typewriter";
 import DotCard from "@/components/ui/moving-dot-card";
 import { HoverFooter } from "@/components/ui/hover-footer";
-import IntegrationHero from "@/components/ui/integration-hero";
 import SnowBallLoadingSpinner from "@/components/ui/snow-ball-loading-spinner";
 import DataAnalysisLottie from "@/components/ui/data-analysis-lottie";
-import IsometricFeature from "@/components/ui/isometric-feature";
 import { ContactSection } from "@/components/ui/contact-section";
-import React, { useRef, useState, useEffect } from "react";
+import type { CSSProperties } from "react";
+import { useRef, useState, useEffect, lazy, Suspense } from "react";
+
+const IsometricFeature = lazy(() => import("@/components/ui/isometric-feature").then(m => ({ default: m.default })));
+const IntegrationHero = lazy(() => import("@/components/ui/integration-hero").then(m => ({ default: m.default })));
 
 // Lottie assets
 import lottieDataAnalysis from "@/assets/isometric-data-analysis.json";
@@ -124,7 +126,7 @@ function TestimonialCard({
       <CardContent className="p-6">
         <div className="flex items-center gap-3">
           <Avatar className="size-10 border border-black/10 dark:border-white/10">
-            <AvatarImage src={img} alt={name} />
+            <AvatarImage src={img} alt={name} loading="lazy" />
             <AvatarFallback className="bg-black/5 dark:bg-white/10">{name[0]}</AvatarFallback>
           </Avatar>
           <div className="flex flex-col">
@@ -145,10 +147,9 @@ export default function App() {
   const [isLoading, setIsLoading] = useState(true);
   const [isAtTop, setIsAtTop] = useState(true);
   useEffect(() => {
-    // Simulate initial loading sequence for the landing page
     const timer = setTimeout(() => {
       setIsLoading(false);
-    }, 2500);
+    }, 100);
     return () => clearTimeout(timer);
   }, []);
 
@@ -236,6 +237,8 @@ export default function App() {
             loop
             muted
             playsInline
+            preload="none"
+            poster="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1920 1080'%3E%3Crect fill='%23000' width='1920' height='1080'/%3E%3C/svg%3E"
             className="absolute inset-0 w-full h-full object-cover z-0 pointer-events-none"
           >
             <source src={heroVideo} type="video/mp4" />
@@ -321,26 +324,34 @@ export default function App() {
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-12 md:gap-16">
-              <IsometricFeature
-                animationData={lottieDataAnalysis}
-                title="Análisis Masivo"
-                description="Procesamiento isométrico de grandes volúmenes de datos. Convierte la complejidad del Big Data en paneles de control intuitivos."
-              />
-              <IsometricFeature
-                animationData={lottieInternetShop}
-                title="E-Commerce Inteligente"
-                description="Tiendas online hiper-optimizadas con recomendaciones IA, carritos predictivos y una experiencia de usuario sin fricción."
-              />
-              <IsometricFeature
-                animationData={lottieAIBrain}
-                title="Cerebro Robótico"
-                description="Integramos modelos fundacionales de IA directamente en tu núcleo operativo, creando automatizaciones cognitivas ininterrumpidas."
-              />
-              <IsometricFeature
-                animationData={lottiePredictiveAnalysis}
-                title="Análisis Predictivo"
-                description="Algoritmos de inteligencia predictiva en tiempo real para anticipar tendencias y optimizar la toma de decisiones estratégicas."
-              />
+              <Suspense fallback={<div className="h-48 animate-pulse bg-zinc-100 dark:bg-zinc-800 rounded-xl" />}>
+                <IsometricFeature
+                  animationData={lottieDataAnalysis}
+                  title="Análisis Masivo"
+                  description="Procesamiento isométrico de grandes volúmenes de datos. Convierte la complejidad del Big Data en paneles de control intuitivos."
+                />
+              </Suspense>
+              <Suspense fallback={<div className="h-48 animate-pulse bg-zinc-100 dark:bg-zinc-800 rounded-xl" />}>
+                <IsometricFeature
+                  animationData={lottieInternetShop}
+                  title="E-Commerce Inteligente"
+                  description="Tiendas online hiper-optimizadas con recomendaciones IA, carritos predictivos y una experiencia de usuario sin fricción."
+                />
+              </Suspense>
+              <Suspense fallback={<div className="h-48 animate-pulse bg-zinc-100 dark:bg-zinc-800 rounded-xl" />}>
+                <IsometricFeature
+                  animationData={lottieAIBrain}
+                  title="Cerebro Robótico"
+                  description="Integramos modelos fundacionales de IA directamente en tu núcleo operativo, creando automatizaciones cognitivas ininterrumpidas."
+                />
+              </Suspense>
+              <Suspense fallback={<div className="h-48 animate-pulse bg-zinc-100 dark:bg-zinc-800 rounded-xl" />}>
+                <IsometricFeature
+                  animationData={lottiePredictiveAnalysis}
+                  title="Análisis Predictivo"
+                  description="Algoritmos de inteligencia predictiva en tiempo real para anticipar tendencias y optimizar la toma de decisiones estratégicas."
+                />
+              </Suspense>
             </div>
           </div>
         </div>
@@ -408,7 +419,9 @@ export default function App() {
       {/* Integration Hero Section */}
       <section className="w-full px-4 md:px-8 pb-4 md:pb-8">
         <div className="rounded-2xl md:rounded-3xl overflow-hidden border border-black/5 dark:border-white/5 bg-white dark:bg-zinc-950 py-8 md:py-20 px-0 shadow-2xl transition-colors duration-500">
-          <IntegrationHero />
+          <Suspense fallback={<div className="h-48 animate-pulse bg-zinc-100 dark:bg-zinc-800 rounded-xl" />}>
+            <IntegrationHero />
+          </Suspense>
         </div>
       </section>
 
@@ -427,7 +440,7 @@ export default function App() {
               }}
             >
               {/* Vertical Marquee 1 */}
-              <Marquee vertical pauseOnHover repeat={4} style={{ '--duration': '30s' } as React.CSSProperties}>
+              <Marquee vertical pauseOnHover repeat={2} style={{ '--duration': '30s' } as CSSProperties}>
                 {testimonials.map((review) => (
                   <TestimonialCard
                     key={review.username}
@@ -440,7 +453,7 @@ export default function App() {
                 ))}
               </Marquee>
               {/* Vertical Marquee 2 (Reverse) */}
-              <Marquee vertical pauseOnHover reverse repeat={4} style={{ '--duration': '35s' } as React.CSSProperties}>
+              <Marquee vertical pauseOnHover reverse repeat={2} style={{ '--duration': '35s' } as CSSProperties}>
                 {testimonials.slice().reverse().map((review) => (
                   <TestimonialCard
                     key={review.username + "-rev"}
@@ -453,7 +466,7 @@ export default function App() {
                 ))}
               </Marquee>
               {/* Vertical Marquee 3 */}
-              <Marquee vertical pauseOnHover repeat={4} style={{ '--duration': '40s' } as React.CSSProperties}>
+              <Marquee vertical pauseOnHover repeat={2} style={{ '--duration': '40s' } as CSSProperties}>
                 {testimonials.map((review) => (
                   <TestimonialCard
                     key={review.username + "-3"}
@@ -466,7 +479,7 @@ export default function App() {
                 ))}
               </Marquee>
               {/* Vertical Marquee 4 (Reverse) */}
-              <Marquee vertical pauseOnHover reverse repeat={4} style={{ '--duration': '25s' } as React.CSSProperties}>
+              <Marquee vertical pauseOnHover reverse repeat={2} style={{ '--duration': '25s' } as CSSProperties}>
                 {testimonials.slice().reverse().map((review) => (
                   <TestimonialCard
                     key={review.username + "-rev-4"}
