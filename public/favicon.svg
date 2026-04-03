@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 800">
+  <defs>
+    <style>
+      .stroke-main { fill: none; stroke: #111; stroke-linecap: round; stroke-linejoin: round; }
+      @media (prefers-color-scheme: dark) {
+        .stroke-main { stroke: #fff; }
+      }
+    </style>
+  </defs>
+  <polygon points="400,200 608,320 608,560 400,680 192,560 192,320" class="stroke-main" stroke-width="16"/>
+  <line x1="400" y1="440" x2="400" y2="680" class="stroke-main" stroke-width="12"/>
+  <line x1="400" y1="440" x2="192" y2="320" class="stroke-main" stroke-width="12"/>
+  <line x1="400" y1="440" x2="608" y2="320" class="stroke-main" stroke-width="12"/>
+  <circle cx="400" cy="440" r="20" fill="#111"/>
+  <style>
+    @media (prefers-color-scheme: dark) {
+      circle { fill: #fff; }
+    }
+  </style>
+</svg>

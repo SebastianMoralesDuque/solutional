@@ -1,7 +1,7 @@
 "use client";
 
 import { cn } from "@/lib/utils";
-import { useRef, useEffect, useCallback, PointerEvent } from "react";
+import { useRef, useEffect, useCallback, PointerEvent, useState } from "react";
 
 interface GlobeProps {
     className?: string;
@@ -98,6 +98,7 @@ export function InteractiveGlobe({
     connections = DEFAULT_CONNECTIONS,
     markers = DEFAULT_MARKERS,
 }: GlobeProps) {
+    const containerRef = useRef<HTMLDivElement>(null);
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const rotYRef = useRef(0.4);
     const rotXRef = useRef(0.3);
@@ -110,6 +111,19 @@ export function InteractiveGlobe({
     }>({ active: false, startX: 0, startY: 0, startRotY: 0, startRotX: 0 });
     const animRef = useRef<number>(0);
     const timeRef = useRef(0);
+    const [isInView, setIsInView] = useState(false);
+
+    // IntersectionObserver to pause animation when not visible
+    useEffect(() => {
+        const el = containerRef.current;
+        if (!el) return;
+        const observer = new IntersectionObserver(
+            ([entry]) => setIsInView(entry.isIntersecting),
+            { rootMargin: "100px" }
+        );
+        observer.observe(el);
+        return () => observer.disconnect();
+    }, []);
 
     // Generate globe dots (land approximation via density sampling)
     const dotsRef = useRef<[number, number, number][]>([]);
@@ -158,7 +172,7 @@ export function InteractiveGlobe({
 
         ctx.clearRect(0, 0, w, h);
 
-        // Circular glow localized to the globe (FIX: no square edges)
+        // Circular glow localized to the globe
         const glowRad = radius * 1.5;
         const glowGrad = ctx.createRadialGradient(cx, cy, radius * 0.8, cx, cy, glowRad);
         glowGrad.addColorStop(0, "rgba(60, 140, 255, 0.08)");
@@ -169,7 +183,7 @@ export function InteractiveGlobe({
         ctx.fillStyle = glowGrad;
         ctx.fill();
 
-        // Globe outline (more subtle)
+        // Globe outline
         ctx.beginPath();
         ctx.arc(cx, cy, radius, 0, Math.PI * 2);
         ctx.strokeStyle = "rgba(100, 180, 255, 0.1)";
@@ -190,7 +204,7 @@ export function InteractiveGlobe({
             [x, y, z] = rotateX(x, y, z, rx);
             [x, y, z] = rotateY(x, y, z, ry);
 
-            if (z > 0) continue; // back-face cull
+            if (z > 0) continue;
 
             const [sx, sy] = project(x, y, z, cx, cy, fov);
             const depthAlpha = Math.max(0.1, 1 - (z + radius) / (2 * radius));
@@ -215,13 +229,11 @@ export function InteractiveGlobe({
             [x2, y2, z2] = rotateX(x2, y2, z2, rx);
             [x2, y2, z2] = rotateY(x2, y2, z2, ry);
 
-            // Only draw if both points face camera
             if (z1 > radius * 0.3 && z2 > radius * 0.3) continue;
 
             const [sx1, sy1] = project(x1, y1, z1, cx, cy, fov);
             const [sx2, sy2] = project(x2, y2, z2, cx, cy, fov);
 
-            // Elevated midpoint for arc
             const midX = (x1 + x2) / 2;
             const midY = (y1 + y2) / 2;
             const midZ = (z1 + z2) / 2;
@@ -239,7 +251,6 @@ export function InteractiveGlobe({
             ctx.lineWidth = 1.2;
             ctx.stroke();
 
-            // Traveling dot along arc
             const t = (Math.sin(time * 1.2 + lat1 * 0.1) + 1) / 2;
             const tx = (1 - t) * (1 - t) * sx1 + 2 * (1 - t) * t * scx + t * t * sx2;
             const ty = (1 - t) * (1 - t) * sy1 + 2 * (1 - t) * t * scy + t * t * sy2;
@@ -260,7 +271,6 @@ export function InteractiveGlobe({
 
             const [sx, sy] = project(x, y, z, cx, cy, fov);
 
-            // Pulse ring
             const pulse = Math.sin(time * 2 + marker.lat) * 0.5 + 0.5;
             ctx.beginPath();
             ctx.arc(sx, sy, 4 + pulse * 4, 0, Math.PI * 2);
@@ -268,13 +278,11 @@ export function InteractiveGlobe({
             ctx.lineWidth = 1;
             ctx.stroke();
 
-            // Core dot
             ctx.beginPath();
             ctx.arc(sx, sy, 2.5, 0, Math.PI * 2);
             ctx.fillStyle = markerColor;
             ctx.fill();
 
-            // Label
             if (marker.label) {
                 ctx.font = "10px system-ui, sans-serif";
                 ctx.fillStyle = markerColor.replace("1)", "0.6)");
@@ -286,9 +294,13 @@ export function InteractiveGlobe({
     }, [dotColor, arcColor, markerColor, autoRotateSpeed, connections, markers]);
 
     useEffect(() => {
+        if (!isInView) {
+            cancelAnimationFrame(animRef.current);
+            return;
+        }
         animRef.current = requestAnimationFrame(draw);
         return () => cancelAnimationFrame(animRef.current);
-    }, [draw]);
+    }, [draw, isInView]);
 
     // Mouse drag handlers
     const onPointerDown = useCallback(
@@ -324,13 +336,15 @@ export function InteractiveGlobe({
     }, []);
 
     return (
-        <canvas
-            ref={canvasRef}
-            className={cn("w-full h-full cursor-grab active:cursor-grabbing", className)}
-            style={{ width: size, height: size }}
-            onPointerDown={onPointerDown}
-            onPointerMove={onPointerMove}
-            onPointerUp={onPointerUp}
-        />
+        <div ref={containerRef}>
+            <canvas
+                ref={canvasRef}
+                className={cn("w-full h-full cursor-grab active:cursor-grabbing", className)}
+                style={{ width: size, height: size }}
+                onPointerDown={onPointerDown}
+                onPointerMove={onPointerMove}
+                onPointerUp={onPointerUp}
+            />
+        </div>
     );
 }

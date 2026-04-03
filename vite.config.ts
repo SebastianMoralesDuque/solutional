@@ -15,11 +15,12 @@ export default defineConfig(({ mode }) => {
     ],
     build: {
       rollupOptions: {
+        external: ['express', 'better-sqlite3', 'dotenv'],
         output: {
           manualChunks: {
             'vendor-react': ['react', 'react-dom'],
             'vendor-motion': ['framer-motion'],
-            'vendor-lottie': ['lottie-react', '@lottiefiles/dotlottie-react'],
+            'vendor-lottie': ['lottie-react'],
           },
         },
       },

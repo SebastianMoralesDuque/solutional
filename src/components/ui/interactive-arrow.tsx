@@ -1,8 +1,7 @@
 "use client";
 
-import React, { useEffect, useRef, useCallback } from 'react';
+import React, { useEffect, useRef, useCallback, useState } from 'react';
 
-// Helper to parse 'rgb(r, g, b)' or 'rgba(r, g, b, a)' string to {r, g, b}
 const parseRgbColor = (colorString: string) => {
     if (!colorString) return null;
     const match = colorString.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)(?:,\s*[\d.]+)?\)/);
@@ -18,7 +17,7 @@ const parseRgbColor = (colorString: string) => {
 
 interface InteractiveArrowProps {
     targetRef: React.RefObject<HTMLElement | null>;
-    color?: string; // Optional hex or rgb color
+    color?: string;
     active?: boolean;
 }
 
@@ -33,7 +32,7 @@ export const InteractiveArrow: React.FC<InteractiveArrowProps> = ({
     const animationFrameIdRef = useRef<number>(0);
 
     const resolvedCanvasColorsRef = useRef({
-        strokeStyle: { r: 255, g: 255, b: 255 }, // Default white
+        strokeStyle: { r: 255, g: 255, b: 255 },
     });
 
     useEffect(() => {
@@ -41,16 +40,13 @@ export const InteractiveArrow: React.FC<InteractiveArrowProps> = ({
             const parsed = parseRgbColor(color);
             if (parsed) resolvedCanvasColorsRef.current.strokeStyle = parsed;
         } else {
-            // Try to use CSS variable for foreground
             const tempElement = document.createElement('div');
             tempElement.style.display = 'none';
             document.body.appendChild(tempElement);
-            tempElement.style.color = 'white'; // Default for our dark theme
-
+            tempElement.style.color = 'white';
             const computedStyle = getComputedStyle(tempElement);
             const parsed = parseRgbColor(computedStyle.color);
             if (parsed) resolvedCanvasColorsRef.current.strokeStyle = parsed;
-
             document.body.removeChild(tempElement);
         }
     }, [color]);
@@ -69,7 +65,6 @@ export const InteractiveArrow: React.FC<InteractiveArrowProps> = ({
 
         const rect = targetEl.getBoundingClientRect();
 
-        // Don't draw if the target is not visible or mouse is too close
         if (rect.width === 0 || rect.height === 0) return;
 
         const cx = rect.left + rect.width / 2;
@@ -77,7 +72,6 @@ export const InteractiveArrow: React.FC<InteractiveArrowProps> = ({
 
         const dist = Math.hypot(cx - x0, cy - y0);
 
-        // Hide if too close or too far to prevent clutter
         if (dist < 50 || dist > 800) return;
 
         const a = Math.atan2(cy - y0, cx - x0);
@@ -91,14 +85,12 @@ export const InteractiveArrow: React.FC<InteractiveArrowProps> = ({
         const controlX = midX;
         const controlY = midY + offset * t;
 
-        // Opacity ramps up based on distance (closer = more opaque, up to a point)
         const opacity = Math.min(0.8, (dist - 50) / 400);
 
         const arrowColor = resolvedCanvasColorsRef.current.strokeStyle;
         ctx.strokeStyle = `rgba(${arrowColor.r}, ${arrowColor.g}, ${arrowColor.b}, ${opacity})`;
         ctx.lineWidth = 2;
 
-        // Draw curve
         ctx.save();
         ctx.beginPath();
         ctx.moveTo(x0, y0);
@@ -107,7 +99,6 @@ export const InteractiveArrow: React.FC<InteractiveArrowProps> = ({
         ctx.stroke();
         ctx.restore();
 
-        // Draw arrowhead
         const angle = Math.atan2(y1 - controlY, x1 - controlX);
         const headLength = 12;
         ctx.beginPath();
@@ -146,14 +137,16 @@ export const InteractiveArrow: React.FC<InteractiveArrowProps> = ({
         updateCanvasSize();
 
         const animateLoop = () => {
-            if (ctx && canvas) {
+            if (ctx && canvas && active) {
                 ctx.clearRect(0, 0, canvas.width, canvas.height);
                 drawArrow();
             }
             animationFrameIdRef.current = requestAnimationFrame(animateLoop);
         };
 
-        animateLoop();
+        if (active) {
+            animateLoop();
+        }
 
         return () => {
             window.removeEventListener("resize", updateCanvasSize);
@@ -162,13 +155,14 @@ export const InteractiveArrow: React.FC<InteractiveArrowProps> = ({
                 cancelAnimationFrame(animationFrameIdRef.current);
             }
         };
-    }, [drawArrow]);
+    }, [drawArrow, active]);
+
+    if (!active) return null;
 
     return (
         <canvas
             ref={canvasRef}
             className="fixed inset-0 pointer-events-none z-[100]"
-            style={{ display: active ? 'block' : 'none' }}
         />
     );
 };

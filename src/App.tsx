@@ -1,31 +1,69 @@
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowRight, Bot, Code2, Sparkles, Zap, Shield, Rocket } from "lucide-react";
 import heroVideo from "./video.mp4";
 import { Logo } from "./Logo";
-import { InteractiveGlobe } from "@/components/ui/interactive-globe";
-import { BackgroundBeamsWithCollision } from "@/components/ui/background-beams-with-collision";
-import { InteractiveArrow } from "@/components/ui/interactive-arrow";
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Card, CardContent } from '@/components/ui/card';
-import { Marquee, type MarqueeProps } from '@/components/ui/marquee';
+import { Marquee } from '@/components/ui/marquee';
 import { Typewriter } from "@/components/ui/typewriter";
-import DotCard from "@/components/ui/moving-dot-card";
-import { HoverFooter } from "@/components/ui/hover-footer";
 import SnowBallLoadingSpinner from "@/components/ui/snow-ball-loading-spinner";
-import DataAnalysisLottie from "@/components/ui/data-analysis-lottie";
-import { ContactSection } from "@/components/ui/contact-section";
 import type { CSSProperties } from "react";
 import { useRef, useState, useEffect, lazy, Suspense } from "react";
+import {
+  GlobeSkeleton,
+  BeamsSkeleton,
+  FooterSkeleton,
+  ContactSkeleton,
+  IntegrationSkeleton,
+  FeatureCardSkeleton,
+} from "@/components/ui/skeletons";
 
-const IsometricFeature = lazy(() => import("@/components/ui/isometric-feature").then(m => ({ default: m.default })));
-const IntegrationHero = lazy(() => import("@/components/ui/integration-hero").then(m => ({ default: m.default })));
+// Lazy load heavy sections
+const BackgroundBeamsWithCollision = lazy(() => import("@/components/ui/background-beams-with-collision").then(m => ({ default: m.BackgroundBeamsWithCollision })));
+const InteractiveGlobe = lazy(() => import("@/components/ui/interactive-globe").then(m => ({ default: m.InteractiveGlobe })));
+const InteractiveArrow = lazy(() => import("@/components/ui/interactive-arrow").then(m => ({ default: m.InteractiveArrow })));
+const HoverFooter = lazy(() => import("@/components/ui/hover-footer").then(m => ({ default: m.HoverFooter })));
+const ContactSection = lazy(() => import("@/components/ui/contact-section").then(m => ({ default: m.ContactSection })));
+const IsometricFeature = lazy(() => import("@/components/ui/isometric-feature"));
+const IntegrationHero = lazy(() => import("@/components/ui/integration-hero"));
 
-// Lottie assets
-import lottieDataAnalysis from "@/assets/isometric-data-analysis.json";
-import lottieInternetShop from "@/assets/isometric-internet-shop.json";
-import lottieAIBrain from "@/assets/technology-isometric-ai-robot-brain.json";
-import lottiePredictiveAnalysis from "@/assets/crypto-animation.json";
-// Testimonials data...
+// Lazy load Lottie JSON assets
+const lazyLottieDataAnalysis = () => import("@/assets/isometric-data-analysis.json");
+const lazyLottieInternetShop = () => import("@/assets/isometric-internet-shop.json");
+const lazyLottieAIBrain = () => import("@/assets/technology-isometric-ai-robot-brain.json");
+const lazyLottiePredictiveAnalysis = () => import("@/assets/crypto-animation.json");
+
+// Lazy-loaded Lottie feature card that fetches its own data
+function LazyIsometricFeature({
+  loader,
+  title,
+  description,
+}: {
+  loader: () => Promise<{ default: unknown }>;
+  title: string;
+  description: string;
+}) {
+  const [animationData, setAnimationData] = useState<unknown>(null);
+
+  useEffect(() => {
+    loader().then((mod) => setAnimationData(mod.default));
+  }, [loader]);
+
+  if (!animationData) {
+    return <FeatureCardSkeleton />;
+  }
+
+  return (
+    <Suspense fallback={<FeatureCardSkeleton />}>
+      <IsometricFeature
+        animationData={animationData}
+        title={title}
+        description={description}
+      />
+    </Suspense>
+  );
+}
+
+// Testimonials data
 interface Testimonial {
   name: string;
   username: string;
@@ -142,10 +180,13 @@ function TestimonialCard({
   );
 }
 
+const DotCard = lazy(() => import("@/components/ui/moving-dot-card"));
+
 export default function App() {
   const contactBtnRef = useRef<HTMLButtonElement>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isAtTop, setIsAtTop] = useState(true);
+
   useEffect(() => {
     const timer = setTimeout(() => {
       setIsLoading(false);
@@ -157,7 +198,7 @@ export default function App() {
     const handleScroll = () => {
       setIsAtTop(window.scrollY < 300);
     };
-    window.addEventListener("scroll", handleScroll);
+    window.addEventListener("scroll", handleScroll, { passive: true });
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
@@ -186,9 +227,11 @@ export default function App() {
       </AnimatePresence>
 
       {/* Interactive Arrow Incentive */}
-      <InteractiveArrow targetRef={contactBtnRef} active={isAtTop} />
+      <Suspense fallback={null}>
+        <InteractiveArrow targetRef={contactBtnRef} active={isAtTop} />
+      </Suspense>
 
-      {/* Navbar (Fixed to follow scroll) */}
+      {/* Navbar */}
       <header className="fixed top-3 md:top-5 left-1 md:left-2 right-1 md:right-2 z-50 px-4 md:px-8 pointer-events-none">
         <nav className="max-w-6xl mx-auto glass-nav rounded-2xl px-6 py-1 flex items-center justify-between pointer-events-auto shadow-xl text-black dark:text-white transition-colors duration-500">
           <div className="flex items-center gap-3">
@@ -224,14 +267,10 @@ export default function App() {
         </nav>
       </header>
 
-
-
       {/* Hero Area */}
       <main id="inicio" className="flex-none flex flex-col w-full h-[80vh] md:h-screen px-4 md:px-8 pb-4 md:pb-8 relative">
-        {/* Mac OS Style Card Container */}
         <div className="relative flex-grow w-full rounded-2xl md:rounded-3xl border border-black/5 overflow-hidden flex flex-col items-center justify-center shadow-lg bg-white dark:bg-zinc-950 text-black dark:text-white transition-colors duration-500">
-
-          {/* Background Video for Hero Section */}
+          {/* Background Video */}
           <video
             autoPlay
             loop
@@ -244,8 +283,7 @@ export default function App() {
             <source src={heroVideo} type="video/mp4" />
           </video>
 
-
-          {/* Large Spaced Text (Agency Name) */}
+          {/* Large Spaced Text */}
           <div className="absolute bottom-24 w-full text-center z-10 pointer-events-none px-4 flex flex-col items-center gap-4">
             <motion.h1
               initial={{ opacity: 0, letterSpacing: "0.2em" }}
@@ -286,28 +324,30 @@ export default function App() {
           </div>
         </div>
       </main>
+
       {/* Explosive Impact Section */}
       <section className="w-full px-4 md:px-8 pb-4 md:pb-8">
-        <BackgroundBeamsWithCollision className="rounded-2xl md:rounded-3xl border border-black/5 dark:border-white/5 bg-white dark:bg-zinc-950 p-8 md:p-20 transition-colors duration-500">
-          <h2 className="text-2xl relative z-20 md:text-4xl lg:text-7xl font-display font-bold text-center text-black dark:text-white font-sans tracking-tight max-w-4xl px-4">
-            ¿Qué es más potente que la IA?{" "}
-            <div className="relative mx-auto inline-block w-max [filter:drop-shadow(0px_1px_3px_rgba(27,_37,_80,_0.14))]">
-              <div className="absolute left-0 top-[1px] bg-clip-text bg-no-repeat text-transparent bg-gradient-to-r py-4 from-blue-600 via-indigo-600 to-cyan-500 [text-shadow:0_0_rgba(0,0,0,0.1)]">
-                <span className="">IA que Colisiona.</span>
+        <Suspense fallback={<BeamsSkeleton />}>
+          <BackgroundBeamsWithCollision className="rounded-2xl md:rounded-3xl border border-black/5 dark:border-white/5 bg-white dark:bg-zinc-950 p-8 md:p-20 transition-colors duration-500">
+            <h2 className="text-2xl relative z-20 md:text-4xl lg:text-7xl font-display font-bold text-center text-black dark:text-white font-sans tracking-tight max-w-4xl px-4">
+              ¿Qué es más potente que la IA?{" "}
+              <div className="relative mx-auto inline-block w-max [filter:drop-shadow(0px_1px_3px_rgba(27,_37,_80,_0.14))]">
+                <div className="absolute left-0 top-[1px] bg-clip-text bg-no-repeat text-transparent bg-gradient-to-r py-4 from-blue-600 via-indigo-600 to-cyan-500 [text-shadow:0_0_rgba(0,0,0,0.1)]">
+                  <span className="">IA que Colisiona.</span>
+                </div>
+                <div className="relative bg-clip-text text-transparent bg-no-repeat bg-gradient-to-r from-blue-600 via-indigo-600 to-cyan-500 py-4">
+                  <span className="">IA que Colisiona.</span>
+                </div>
               </div>
-              <div className="relative bg-clip-text text-transparent bg-no-repeat bg-gradient-to-r from-blue-600 via-indigo-600 to-cyan-500 py-4">
-                <span className="">IA que Colisiona.</span>
-              </div>
-            </div>
-            <p className="text-base md:text-xl font-medium text-black/40 dark:text-white/40 mt-8 max-w-xl mx-auto tracking-normal font-sans">
-              Fusionamos algoritmos avanzados con diseño de vanguardia para crear impacto real en tu industria.
-            </p>
-          </h2>
-        </BackgroundBeamsWithCollision>
+              <p className="text-base md:text-xl font-medium text-black/40 dark:text-white/40 mt-8 max-w-xl mx-auto tracking-normal font-sans">
+                Fusionamos algoritmos avanzados con diseño de vanguardia para crear impacto real en tu industria.
+              </p>
+            </h2>
+          </BackgroundBeamsWithCollision>
+        </Suspense>
       </section>
 
-
-      {/* White Background Features Section */}
+      {/* Features Section */}
       <section id="servicios" className="w-full px-4 md:px-8 pb-4 md:pb-8">
         <div className="bg-white dark:bg-zinc-950 rounded-2xl md:rounded-3xl border border-black/5 dark:border-white/5 shadow-sm p-8 md:p-20 transition-colors duration-500">
           <div className="max-w-7xl mx-auto">
@@ -324,34 +364,26 @@ export default function App() {
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-12 md:gap-16">
-              <Suspense fallback={<div className="h-48 animate-pulse bg-zinc-100 dark:bg-zinc-800 rounded-xl" />}>
-                <IsometricFeature
-                  animationData={lottieDataAnalysis}
-                  title="Análisis Masivo"
-                  description="Procesamiento isométrico de grandes volúmenes de datos. Convierte la complejidad del Big Data en paneles de control intuitivos."
-                />
-              </Suspense>
-              <Suspense fallback={<div className="h-48 animate-pulse bg-zinc-100 dark:bg-zinc-800 rounded-xl" />}>
-                <IsometricFeature
-                  animationData={lottieInternetShop}
-                  title="E-Commerce Inteligente"
-                  description="Tiendas online hiper-optimizadas con recomendaciones IA, carritos predictivos y una experiencia de usuario sin fricción."
-                />
-              </Suspense>
-              <Suspense fallback={<div className="h-48 animate-pulse bg-zinc-100 dark:bg-zinc-800 rounded-xl" />}>
-                <IsometricFeature
-                  animationData={lottieAIBrain}
-                  title="Cerebro Robótico"
-                  description="Integramos modelos fundacionales de IA directamente en tu núcleo operativo, creando automatizaciones cognitivas ininterrumpidas."
-                />
-              </Suspense>
-              <Suspense fallback={<div className="h-48 animate-pulse bg-zinc-100 dark:bg-zinc-800 rounded-xl" />}>
-                <IsometricFeature
-                  animationData={lottiePredictiveAnalysis}
-                  title="Análisis Predictivo"
-                  description="Algoritmos de inteligencia predictiva en tiempo real para anticipar tendencias y optimizar la toma de decisiones estratégicas."
-                />
-              </Suspense>
+              <LazyIsometricFeature
+                loader={lazyLottieDataAnalysis}
+                title="Análisis Masivo"
+                description="Procesamiento isométrico de grandes volúmenes de datos. Convierte la complejidad del Big Data en paneles de control intuitivos."
+              />
+              <LazyIsometricFeature
+                loader={lazyLottieInternetShop}
+                title="E-Commerce Inteligente"
+                description="Tiendas online hiper-optimizadas con recomendaciones IA, carritos predictivos y una experiencia de usuario sin fricción."
+              />
+              <LazyIsometricFeature
+                loader={lazyLottieAIBrain}
+                title="Cerebro Robótico"
+                description="Integramos modelos fundacionales de IA directamente en tu núcleo operativo, creando automatizaciones cognitivas ininterrumpidas."
+              />
+              <LazyIsometricFeature
+                loader={lazyLottiePredictiveAnalysis}
+                title="Análisis Predictivo"
+                description="Algoritmos de inteligencia predictiva en tiempo real para anticipar tendencias y optimizar la toma de decisiones estratégicas."
+              />
             </div>
           </div>
         </div>
@@ -360,11 +392,9 @@ export default function App() {
       {/* Global Edge Network Section */}
       <section id="red" className="w-full px-4 md:px-8 pb-4 md:pb-8">
         <div className="w-full rounded-2xl md:rounded-3xl border border-black/5 dark:border-white/5 bg-white dark:bg-zinc-950 overflow-hidden relative shadow-lg transition-colors duration-500">
-          {/* Ambient glow */}
           <div className="absolute top-0 right-1/4 w-96 h-96 rounded-full bg-blue-500/5 blur-3xl pointer-events-none" />
 
           <div className="flex flex-col md:flex-row min-h-[500px] md:min-h-[600px]">
-            {/* Left content */}
             <div className="flex-1 flex flex-col justify-center p-10 md:p-14 lg:p-20 relative z-10">
               <div className="inline-flex items-center gap-2 rounded-full border border-black/10 dark:border-white/10 bg-black/5 dark:bg-white/5 px-3 py-1 text-xs text-black/60 dark:text-white/60 mb-6 w-fit backdrop-blur-md">
                 <span className="size-1.5 rounded-full bg-emerald-400 animate-pulse" />
@@ -402,29 +432,31 @@ export default function App() {
               </div>
             </div>
 
-            {/* Right — Globe */}
+            {/* Globe */}
             <div className="flex-1 flex items-center justify-center p-4 md:p-0 min-h-[400px]">
-              <InteractiveGlobe
-                size={window.innerWidth < 768 ? 320 : 500}
-                dotColor="rgba(0, 0, 0, ALPHA)"
-                arcColor="rgba(59, 130, 246, 0.4)"
-                markerColor="rgba(37, 99, 235, 1)"
-              />
+              <Suspense fallback={<GlobeSkeleton />}>
+                <InteractiveGlobe
+                  size={typeof window !== 'undefined' && window.innerWidth < 768 ? 320 : 500}
+                  dotColor="rgba(0, 0, 0, ALPHA)"
+                  arcColor="rgba(59, 130, 246, 0.4)"
+                  markerColor="rgba(37, 99, 235, 1)"
+                />
+              </Suspense>
             </div>
           </div>
         </div>
       </section>
 
-
-      {/* Integration Hero Section */}
+      {/* Integration Section */}
       <section className="w-full px-4 md:px-8 pb-4 md:pb-8">
         <div className="rounded-2xl md:rounded-3xl overflow-hidden border border-black/5 dark:border-white/5 bg-white dark:bg-zinc-950 py-8 md:py-20 px-0 shadow-2xl transition-colors duration-500">
-          <Suspense fallback={<div className="h-48 animate-pulse bg-zinc-100 dark:bg-zinc-800 rounded-xl" />}>
+          <Suspense fallback={<IntegrationSkeleton />}>
             <IntegrationHero />
           </Suspense>
         </div>
       </section>
 
+      {/* Testimonials */}
       <section id="clientes" className="w-full px-4 md:px-8 pb-4 md:pb-8">
         <div className="rounded-2xl md:rounded-3xl border border-black/5 dark:border-white/5 bg-white dark:bg-zinc-950 p-8 md:p-20 shadow-sm relative overflow-hidden transition-colors duration-500">
           <div className="text-center mb-16">
@@ -439,7 +471,6 @@ export default function App() {
                 transform: 'rotateX(20deg) rotateZ(-5deg) skewX(5deg)',
               }}
             >
-              {/* Vertical Marquee 1 */}
               <Marquee vertical pauseOnHover repeat={2} style={{ '--duration': '30s' } as CSSProperties}>
                 {testimonials.map((review) => (
                   <TestimonialCard
@@ -452,7 +483,6 @@ export default function App() {
                   />
                 ))}
               </Marquee>
-              {/* Vertical Marquee 2 (Reverse) */}
               <Marquee vertical pauseOnHover reverse repeat={2} style={{ '--duration': '35s' } as CSSProperties}>
                 {testimonials.slice().reverse().map((review) => (
                   <TestimonialCard
@@ -465,7 +495,6 @@ export default function App() {
                   />
                 ))}
               </Marquee>
-              {/* Vertical Marquee 3 */}
               <Marquee vertical pauseOnHover repeat={2} style={{ '--duration': '40s' } as CSSProperties}>
                 {testimonials.map((review) => (
                   <TestimonialCard
@@ -478,7 +507,6 @@ export default function App() {
                   />
                 ))}
               </Marquee>
-              {/* Vertical Marquee 4 (Reverse) */}
               <Marquee vertical pauseOnHover reverse repeat={2} style={{ '--duration': '25s' } as CSSProperties}>
                 {testimonials.slice().reverse().map((review) => (
                   <TestimonialCard
@@ -493,14 +521,13 @@ export default function App() {
               </Marquee>
             </div>
 
-            {/* Gradients to fade edges */}
             <div className="pointer-events-none absolute inset-x-0 top-0 h-32 bg-gradient-to-b from-white dark:from-zinc-950 transition-colors duration-500"></div>
             <div className="pointer-events-none absolute inset-x-0 bottom-0 h-32 bg-gradient-to-t from-white dark:from-zinc-950 transition-colors duration-500"></div>
           </div>
         </div>
       </section>
 
-      {/* About Us Card */}
+      {/* About Us */}
       <section id="nosotros" className="w-full px-4 md:px-8 pb-4 md:pb-8">
         <motion.div
           initial={{ opacity: 0, scale: 0.95 }}
@@ -522,16 +549,26 @@ export default function App() {
           </div>
 
           <div className="flex-none flex flex-col gap-8 w-full md:w-auto z-10">
-            <DotCard target={999000} label="Impacto Global" duration={3000} />
-            <DotCard target={450000} label="Agentes Activos" duration={2500} />
-            <DotCard target={150} label="Empresas Scale-up" duration={2000} />
+            <Suspense fallback={<FeatureCardSkeleton />}>
+              <DotCard target={999000} label="Impacto Global" duration={3000} />
+            </Suspense>
+            <Suspense fallback={<FeatureCardSkeleton />}>
+              <DotCard target={450000} label="Agentes Activos" duration={2500} />
+            </Suspense>
+            <Suspense fallback={<FeatureCardSkeleton />}>
+              <DotCard target={150} label="Empresas Scale-up" duration={2000} />
+            </Suspense>
           </div>
         </motion.div>
       </section>
 
-
-      <ContactSection />
-      <HoverFooter />
+      {/* Contact & Footer */}
+      <Suspense fallback={<ContactSkeleton />}>
+        <ContactSection />
+      </Suspense>
+      <Suspense fallback={<FooterSkeleton />}>
+        <HoverFooter />
+      </Suspense>
 
     </div>
   );
